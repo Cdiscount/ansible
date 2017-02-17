@@ -58,6 +58,10 @@ options:
   user:
     description:
       - User to run scheduled task as
+  password:
+    description:
+      - Password of the user to run scheduled task
+    required: false
   executable:
     description:
       - Command the scheduled task should execute

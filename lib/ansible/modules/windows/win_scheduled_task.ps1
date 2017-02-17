@@ -93,6 +93,7 @@ $user = Get-AnsibleParam -obj $params -name "user" -type "str" -failifempty $pre
 $weekly = $frequency -eq "weekly"
 $days_of_week = Get-AnsibleParam -obj $params -name "days_of_week" -type "str" -failifempty $weekly
 
+$pass = Get-AnsibleParam -obj $params -name "password"
 
 try {
     $task = Get-ScheduledTask | Where-Object {$_.TaskName -eq $name -and $_.TaskPath -eq $path}
@@ -186,7 +187,21 @@ try {
         $pathResults = Invoke-TaskPathCheck -Path $path
 
         if (-not $check_mode) {
-            Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $description -TaskPath $path -Settings $settings -Principal $principal
+            $cmd_args = @{
+                Action = $action
+                Trigger = $trigger
+                TaskName = $name
+                Description = $description
+                TaskPath = $path
+                Settings = $settings
+            }
+            if ($pass) {
+                $cmd_args.Add("User", $user)
+                $cmd_args.Add("Password", $pass)
+            } else {
+                $cmd_args.Add("Principal", $principal)
+            }
+            Register-ScheduledTask @cmd_args
         }
 
         $result.changed = $true
@@ -209,7 +224,21 @@ try {
 
             if (-not $check_mode) {
                 $oldPathResults = Invoke-TaskPathCheck -Path $task.TaskPath -Remove
-                Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $description -TaskPath $path -Settings $settings -Principal $principal
+                $cmd_args = @{
+                    Action = $action
+                    Trigger = $trigger
+                    TaskName = $name
+                    Description = $description
+                    TaskPath = $path
+                    Settings = $settings
+                }
+                if ($pass) {
+                    $cmd_args.Add("User", $user)
+                    $cmd_args.Add("Password", $pass)
+                } else {
+                    $cmd_args.Add("Principal", $principal)
+                }
+                Register-ScheduledTask @cmd_args
             }
             $result.changed = $true
             $result.msg = "Updated task $name"
