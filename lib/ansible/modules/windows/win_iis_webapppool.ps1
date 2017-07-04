@@ -78,11 +78,10 @@ try {
     $attributes.GetEnumerator() | foreach {
       $newParameter = $_
       $currentParameter = Get-ItemProperty ("IIS:\AppPools\" + $name) $newParameter.Key
-      $currentParamVal = ""
-      try {
-        $currentParamVal = $currentParameter
-      } catch {
+      if ($currentParameter -ne $null -and ($currentParameter | Get-Member -Name "Value")) {
         $currentParamVal = $currentParameter.Value
+      } else {
+        $currentParamVal = $currentParameter
       }
       if(-not $currentParamVal -or ($currentParamVal -as [String]) -ne $newParameter.Value) {
         Set-ItemProperty ("IIS:\AppPools\" + $name) $newParameter.Key $newParameter.Value
